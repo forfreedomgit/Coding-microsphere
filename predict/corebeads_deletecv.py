@@ -8,11 +8,13 @@ from tqdm import tqdm
 from matplotlib import pyplot as plt
 import seaborn as sns
 
+%matplotlib inline
+
 torch.set_default_tensor_type(torch.DoubleTensor)
 
 
 # [FSFL_FS, FSFL_A, AFL_FS, AFL_A]  --->  [corebeadsFL_FS, corebeadsFL_A]
-# leaky_ReLu
+# ReLu
 # SGD
 
 
@@ -21,10 +23,14 @@ class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
         self.bn1 = nn.BatchNorm1d(4)
-        self.fc1 = nn.Linear(4, 20)
-        #         self.relu = nn.ReLU(inplace=True)
-        self.relu = nn.LeakyReLU(inplace=True)
-        self.fc2 = nn.Linear(20, 2)
+        # self.fc1 = nn.Linear(4, 20)
+        # self.fc1 = nn.Linear(4, 100)
+        self.fc1 = nn.Linear(4, 200)
+        self.relu = nn.ReLU(inplace=True)
+        # self.relu = nn.LeakyReLU(inplace=True)
+        # self.fc2 = nn.Linear(20, 2)
+        # self.fc2 = nn.Linear(100, 2)
+        self.fc2 = nn.Linear(200, 2)
         self.bn2 = nn.BatchNorm1d(2)
         self.bn3 = nn.BatchNorm1d(2)
 
@@ -45,7 +51,7 @@ class Net(nn.Module):
 
 net = Net()
 
-dataPath = 'E:/working/predict/corebeads_deletecv.csv'
+dataPath = 'Fluorescence-coding-microsphere-master/predict/corebeads_deletecv.csv'
 data = pd.read_csv(dataPath)
 
 FSFL_FS_vector = list(data['FSFL_FS'])
@@ -86,6 +92,8 @@ for i in tqdm(range(epochs)):
 
     net.train()
 
+    optimizer.zero_grad()
+
     out, y_gt, out_FS_A_bn, out_pre = net(FSFL_AFL_vector, corebeadsFS_A_s)
 
     out_FS_A_bn = out_FS_A_bn.detach().numpy()
@@ -94,12 +102,10 @@ for i in tqdm(range(epochs)):
 
     criterion = nn.MSELoss()
 
-    loss = criterion(out, y_gt)
+    loss = criterion(out_pre, y_gt)
 
     running_loss.append(loss.detach().numpy())
-
-    optimizer.zero_grad()
-
+    
     loss.backward()
 
     optimizer.step()
@@ -131,9 +137,12 @@ for FS_FS, FS_A, A_FS, A_A in out_FS_A_bn:
 
 len(FS_A_FL_vector)
 
+# %matplotlib inline
+
+
 from mpl_toolkits.mplot3d import Axes3D
 
-fig = plt.figure(figsize=(30, 30))
+fig = plt.figure(figsize=(15, 15))
 ax = fig.add_subplot(111, projection='3d')
 
 X_ = FS_pre_points_last
@@ -141,7 +150,7 @@ Y_ = A_pre_points_last
 
 Z = FS_A_FL_vector
 
-rm_and_lstp_price = ax.plot_trisurf(X_, Y_, Z, color='green')
+ax.plot_trisurf(X_, Y_, Z, color='green')
 
 ax.set_xlabel('FS_pre_points_last')
 ax.set_ylabel('A_pre_points_last')
