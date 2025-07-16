@@ -1,0 +1,47 @@
+import numpy as np
+import torch
+import torch.nn.functional as F
+import torch.nn as nn
+import torch.optim as optim
+import pandas as pd
+from tqdm import tqdm
+from matplotlib import pyplot as plt
+import seaborn as sns
+
+torch.set_default_tensor_type(torch.DoubleTensor)
+
+
+class Net(nn.Module):
+
+    def __init__(self):
+        super(Net, self).__init__()
+        self.bn1 = nn.BatchNorm1d(4)
+        # self.fc1 = nn.Linear(4, 20)
+        # self.fc1 = nn.Linear(4, 100)
+        self.fc1 = nn.Linear(4, 200)
+        self.relu = nn.ReLU(inplace=True)
+        # self.relu = nn.LeakyReLU(inplace=True)
+        # self.fc2 = nn.Linear(20, 2)
+        # self.fc2 = nn.Linear(100, 2)
+        self.fc2 = nn.Linear(200, 2)
+        self.bn2 = nn.BatchNorm1d(2)
+        self.bn3 = nn.BatchNorm1d(2)
+
+    def forward(self, x, y):
+        out_FS_A_bn = self.bn1(x)
+        out = self.fc1(out_FS_A_bn)
+        out = self.relu(out)
+        out = self.fc2(out)
+        out_pre = self.bn2(out)
+
+        y_gt = self.bn3(y)
+
+        return out, y_gt, out_FS_A_bn, out_pre
+
+        # out_FS_A_bn 85*4
+        # out_pre     85*2
+
+
+net = Net()
+
+net.load_state_dict(torch.load('pretrain_weight.pth'))
